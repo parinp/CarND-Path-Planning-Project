@@ -17,7 +17,6 @@ Vehicle::Vehicle(int lane, float s, float v, float target_v, float a, string sta
   this->target_v = target_v;
   this->a = a;
   this->state = state;
-  this->possible_states = transitions[state];
   
 }
 
