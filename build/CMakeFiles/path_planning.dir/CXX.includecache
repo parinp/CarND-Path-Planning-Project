@@ -6,12 +6,10 @@
 
 #IncludeRegexTransform: 
 
-/home/parin/CarND-Path-Planning-Project/src/cost.cpp
-cost.h
-/home/parin/CarND-Path-Planning-Project/src/cost.h
-cmath
--
-functional
+/home/parin/CarND-Path-Planning-Project/src/vehicle.cpp
+vehicle.h
+/home/parin/CarND-Path-Planning-Project/src/vehicle.h
+algorithm
 -
 iterator
 -
@@ -21,14 +19,6 @@ string
 -
 vector
 -
-iostream
--
-algorithm
--
-
-/home/parin/CarND-Path-Planning-Project/src/cost.h
-vehicle.h
-/home/parin/CarND-Path-Planning-Project/src/vehicle.h
 
 /home/parin/CarND-Path-Planning-Project/src/vehicle.h
 map
