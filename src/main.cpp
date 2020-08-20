@@ -140,8 +140,7 @@ int main() {
             std::cout << "\n";
           }
           */
-
-          car.possible_states = car.transitions[car.state];
+         
           plan(car,sensor_fusion,prev_size);
           change_param(car,sensor_fusion,car_d);
 

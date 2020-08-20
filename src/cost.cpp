@@ -6,169 +6,196 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <algorithm> // for std::find
+
+using std::find;
+using std::end;
+using std::begin;
 
 void plan(Vehicle &car, vector<vector<double>> sensor_fusion, const int prev_size){
     
-    Vehicle::collider isCollide;
-    isCollide.collisionLeft = false;
-    isCollide.collisionRight = false;
+    double front_car = 9999999.0;
+    double front_car_speed = 0;
 
-    double safe_distance = 30.0; 
-    double free_distance_left = 9999999.0; 
-    double free_distance_right= 9999999.0;
-    
+    bool left_car = false;
+    bool right_car = false;
+    double safe_distance = 40.0; 
+    double distance_right = 100000;
+    double distance_left = 100000;
 
-    for(int j = 0; j < car.possible_states.size();j++)
+    for(int i = 0; i < sensor_fusion.size();i++)
     {
+        double d = sensor_fusion[i][6];
+        double vx = sensor_fusion[i][3];
+        double vy = sensor_fusion[i][4];    
+        double check_speed = sqrt(vx*vx+vy*vy);
+        double check_car_s = sensor_fusion[i][5];
+
+        check_car_s += ((double)prev_size*0.02*check_speed);
         
-        string pred_state = car.possible_states[j];
+        double dist_to_car = check_car_s - car.s;
 
-        for(int i = 0; i < sensor_fusion.size();i++)
+        if( d < 2+4*car.lane+2 && d > 2+4*car.lane-2)
         {
-            double d = sensor_fusion[i][6];
-            double vx = sensor_fusion[i][3];
-            double vy = sensor_fusion[i][4];    
-            double check_speed = sqrt(vx*vx+vy*vy);
-            double check_car_s = sensor_fusion[i][5];
+            double front = dist_to_car;
+            if(front > 0 && front < front_car)
+            {
+                front_car = front;
+                front_car_speed = check_speed * 2.24;//2.24for mph 
 
-            check_car_s += ((double)prev_size*0.02*check_speed);
-            
-            
-            if(pred_state == "ACC")
+            }
+            if((check_car_s > car.s) && (dist_to_car < safe_distance))
             {
-                if( d < 2+4*car.lane+2 && d > 2+4*car.lane-2)
-                {
-                    if((check_car_s > car.s) && ((check_car_s-car.s) > 50))
-                    {
-                        car.state = pred_state;
-                    }
-                }
-            }else
-            if(pred_state == "KL")
-            {
+                car.state = "KL";
+                car.target_v = front_car_speed;    
                 
-                if( d < 2+4*car.lane+2 && d > 2+4*car.lane-2)
-                {
-                    if((check_car_s > car.s) && ((check_car_s-car.s) < safe_distance))
-                    {
-                        car.state = pred_state;
-                        car.target_v = check_speed*2.24;   //2.24for mph  
-                    }
-                }
-            }else
-            if(pred_state == "PLCL")
-            {
-                if(car.lane>0 && d < 2+4*(car.lane-1)+2 && d>2+4*(car.lane-1)-2)
-                {
-                    if((check_car_s-car.s)<free_distance_left && (check_car_s > car.s))
-                    {
-                        free_distance_left = check_car_s - car.s;
-                    }
-
-                    if(abs(check_car_s - car.s)<10)
-                    {
-                        isCollide.collisionLeft = true;
-                    }
-                }
-
-                if(car.lane==0)
-                {
-                    isCollide.collisionLeft = true;
-                }
-
-            }else
-            if(pred_state == "PLCR")
-            {
-                if(car.lane<2 && d < 2+4*(car.lane+1)+2 && d>2+4*(car.lane+1)-2)
-                {
-                    if((check_car_s-car.s)<free_distance_right && (check_car_s > car.s))
-                    {
-                        free_distance_right = check_car_s - car.s;
-                    }
-
-                    if(abs(check_car_s - car.s)<10)
-                    {
-                        isCollide.collisionRight = true;
-                    }
-                }
-
-                if(car.lane==2)
-                {
-                    isCollide.collisionRight = true;
-                }
-            } 
-        }
-    }
-
-    free_distance_left = isCollide.collisionLeft? 0:free_distance_left;
-    free_distance_right = isCollide.collisionRight? 0:free_distance_right;
-
-    
-    if(free_distance_left == free_distance_right)
-    {
-        int choose = rand() %1;
-        if(choose == 0)
-        {
-            free_distance_right = 0;
+            }
         }else
+        if(car.lane>0 && d < 2+4*(car.lane-1)+2 && d>2+4*(car.lane-1)-2)
         {
-            free_distance_left = 0;
+            if(dist_to_car < safe_distance && check_car_s > car.s)
+            {
+                left_car = true;
+            }else
+            if(dist_to_car > safe_distance)
+            {
+                if(dist_to_car < distance_left)
+                {
+                    distance_left = dist_to_car;
+                }
+            }
+
+            if(fabs(dist_to_car)<15)
+            {
+                left_car = true;
+            }
+        }else
+        if(car.lane<2 && d < 2+4*(car.lane+1)+2 && d>2+4*(car.lane+1)-2)
+        {
+            if(dist_to_car < safe_distance && check_car_s > car.s)
+            {
+                right_car = true;
+            }else
+            if(dist_to_car > safe_distance)
+            {
+                if(dist_to_car < distance_right)
+                {
+                    distance_right = dist_to_car;
+                }
+            }
+
+            if(fabs(dist_to_car)<15)
+            {
+                right_car = true;
+            }
+        }else
+        if(car.lane == 2)
+        {
+            right_car = true;
+        }else
+        if(car.lane == 0)
+        {
+            left_car = true;
         }
-    }
-    
-    
-    if(car.state=="KL")
-    {
-        //std::cout << "free left: " << free_distance_left << endl;
-        //std::cout << "free right: " << free_distance_right << endl;
         
-        if(free_distance_left>free_distance_right && free_distance_left>(safe_distance*1))
+    }//end of sensor fusion loop
+
+    if(car.state == "KL" && car.next_state != "LCL" && car.next_state != "LCR")
+    {
+        if(left_car == false && right_car == true)
         {
-            car.state = car.transitions["PLCL"][0];
-            car.target_lane -= 1;
-            //std::cout << "turn left"<< endl;
+            car.next_state = "LCL";
+            car.target_lane -= 1 ;
         }else
-        if(free_distance_left<free_distance_right && free_distance_right>(safe_distance*1))
+        if(left_car == true && right_car == false)
         {
-            car.state = car.transitions["PLCR"][0];
-            car.target_lane += 1;
-            //std::cout << "turn right" << endl;
+            car.next_state = "LCR";
+            car.target_lane += 1 ;
+        }else
+        if(left_car == true && right_car == true)
+        {
+            car.next_state = "";
+        }else
+        if(left_car == false && right_car == false)
+        {
+            if(distance_left>distance_right)
+            {
+                car.next_state = "LCL";
+                car.target_lane -= 1 ;
+            }else
+            if(distance_left<distance_right)
+            {
+                car.next_state = "LCR";
+                car.target_lane += 1 ;
+            }else
+            if(distance_left==distance_right)
+            {
+                int arrayNum[2] = {-1, 1};
+                int RandIndex = rand() % 2; 
+                int decision = arrayNum[RandIndex];
+
+                if(decision == -1)
+                {
+                    car.next_state = "LCL";
+                    car.target_lane -= 1 ;    
+                }else
+                {
+                    car.next_state = "LCR";
+                    car.target_lane += 1 ;    
+                }
+            }
         }
-    }   
+    }
+    
+    //std::cout << "Left: " << left_car << endl;
+    //std::cout << "Right: " << right_car << endl;
+
+    if(front_car > 50)
+    {
+        car.state = "ACC";
+        car.next_state = "";
+    }
+ 
 }
 
 void change_param(Vehicle &car, const vector<vector<double>> sensor_fusion, const double car_d)
 {
-    //std::cout << car.lane << endl;
+
+    //std::cout << car.state << " > " << car.next_state << endl;
+    //std::cout << car.lane << " > " << car.next_state << endl;
+
     if(car.state == "KL")
-    {
-        
-        if(car.v > car.target_v)
+    {   
+        if(car.next_state == "LCL" || car.next_state == "LCR")
         {
-            car.v -= car.a;
-        }else 
+
+            if(car.v < 49.0)
+            {
+                car.v += car.a;
+            }
+            if( car_d < 2+4*car.target_lane+2 && car_d > 2+4*car.target_lane-2)
+            {
+                car.state = "ACC";
+                car.lane = car.target_lane;
+                car.next_state = "";
+            }
+        }else
         {
-            car.v = car.target_v;
+            if(car.v > car.target_v)
+            {
+                car.v -= car.a;
+            }else 
+            {
+                car.v = car.target_v;
+            }
         }
+
     }else
     if(car.state == "ACC")
     {
         if(car.v < 49.0)
         {
             car.v += car.a;
-        }
-    }else
-    if(car.state == "LCL" || car.state == "LCR")
-    {
-
-        if(car.v < 49.0)
-        {
-            car.v += car.a;
-        }
-        if( car_d < 2+4*car.target_lane+2 && car_d > 2+4*car.target_lane-2)
-        {
-            car.state = "ACC";
-            car.lane = car.target_lane;
         }
     }
 }

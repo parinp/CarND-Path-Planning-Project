@@ -24,26 +24,14 @@ public:
 
 
     //public vehicle variables
-    struct collider {
-        bool collisionRight;
-        bool collisionLeft;
-        int time;
-    };
 
     vector<string> possible_states;
-
-    map<string,vector<string>> transitions = {{"KL",{"ACC","PLCL","PLCR"}},
-                                              {"PLCL",{"LCL"}},
-                                              {"PLCR",{"LCR"}},
-                                              {"LCL",{"LCL"}},
-                                              {"LCR",{"LCR"}},
-                                              {"ACC",{"KL","PLCL","PLCR"}}};
                                        
     int lane, target_lane, s;
     float v, target_v, a, max_acceleration;
-
     
-    string state;
+    string state, next_state;
+
 };
 
 #endif
