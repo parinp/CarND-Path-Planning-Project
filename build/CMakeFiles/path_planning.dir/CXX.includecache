@@ -23,6 +23,8 @@ vector
 -
 iostream
 -
+algorithm
+-
 
 /home/parin/CarND-Path-Planning-Project/src/cost.h
 vehicle.h
