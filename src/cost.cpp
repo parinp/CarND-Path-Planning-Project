@@ -126,20 +126,20 @@ void plan(Vehicle &car, vector<vector<double>> sensor_fusion, const int prev_siz
         {
             car.state = car.transitions["PLCL"][0];
             car.target_lane -= 1;
-            std::cout << "turn left"<< endl;
+            //std::cout << "turn left"<< endl;
         }else
         if(free_distance_left<free_distance_right && free_distance_right>(safe_distance*1))
         {
             car.state = car.transitions["PLCR"][0];
             car.target_lane += 1;
-            std::cout << "turn right" << endl;
+            //std::cout << "turn right" << endl;
         }
     }   
 }
 
 void change_param(Vehicle &car, const vector<vector<double>> sensor_fusion, const double car_d)
 {
-    std::cout << car.lane << endl;
+    //std::cout << car.lane << endl;
     if(car.state == "KL")
     {
         
